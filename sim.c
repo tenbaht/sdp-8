@@ -336,7 +336,13 @@ static uint16_t decode_address(void)
 
 	// check for indirect bit:
 	if (ir & BIT_INDIRECT) {
-		adr = mem_read(adr);
+		if ((adr & 07770) == 00010) {
+			// handle autoindexing for address 0010..0017
+			adr = mem_preinc(adr);
+		} else {
+			// regular read access
+			adr = mem_read(adr);
+		}
 	}
 
 	return adr;
