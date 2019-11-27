@@ -10,8 +10,8 @@
 #define	OP_IOT	06000
 #define	OP_OPR	07000
 
-#define	BIT_CURRENT_PAGE	00400
-#define	BIT_INDIRECT		00200
+#define	BIT_CURRENT_PAGE	00200
+#define	BIT_INDIRECT		00400
 
 #define	MASK_OPCODE		OP_OPR
 #define MASK_BITS		(BIT_CURRENT_PAGE||BIT_INDIRECT)
@@ -22,6 +22,27 @@
 
 uint16_t	acc, link, ir, pc;
 uint16_t	mem[4096]={
+	// copy arr1 to arr2
+	07300,	//  cla cll
+	01410,	//  copy,   tad i pArr1
+	03411,	//	    dca i pArr2
+	02206,	//          isz count
+	05201,	//          jmp copy
+	07402,	//          hlt
+	07772,	//  count,  7772
+	0,
+		// auto-indexing register at 0010:
+	00017,	//  pArr1,  arr1-1
+	00037,	//  pArr2,  arr2-1
+	01,02,03,04,05,06,
+		// the arrays at 0020:
+	01111,	//  arr1,   1111;2222;3333;4444;5555
+	02222,
+	03333,
+	04444,
+	05555,
+
+/*
 	// I/O-Test: print "ABC"
 	07300,	// CLA, CLL
 	01010,	// TAD 010
@@ -34,6 +55,7 @@ uint16_t	mem[4096]={
 	'A',
 	'B',
 	'C',
+*/
 /*
 	// simple loop test: for i=4 to 255; next
 //	07300,	// CLA, CLL
@@ -54,7 +76,7 @@ uint16_t	halt;
  */
 static inline int16_t mem_read(uint16_t adr)
 {
-	return mem[adr & 07777];
+	return mem[adr & 07777] & 07777;
 }
 
 /*
@@ -62,7 +84,12 @@ static inline int16_t mem_read(uint16_t adr)
  */
 static inline uint16_t mem_preinc(uint16_t adr)
 {
-	return ++mem[adr & 07777];
+	uint16_t	tmp;
+
+	tmp = mem[adr & 07777];
+	tmp = (tmp+1) &07777;
+	mem[adr & 07777] = tmp;
+	return tmp;
 }
 
 
@@ -72,7 +99,7 @@ static inline uint16_t mem_preinc(uint16_t adr)
  */
 static inline void mem_write(uint16_t adr, uint16_t val)
 {
-	mem[adr & 07777] = val;
+	mem[adr & 07777] = val & 07777;
 }
 
 
@@ -331,7 +358,7 @@ static uint16_t decode_address(void)
 	if (ir & BIT_CURRENT_PAGE) {
 		// use the upper 5 bits from the current pc
 		// (otherwise default to zero page)
-		adr |= pc & MASK_OFFSET;
+		adr |= pc & 07600;
 	};
 
 	// check for indirect bit:
