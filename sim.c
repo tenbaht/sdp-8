@@ -1,17 +1,18 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#ifdef DEBUG
-# define DEBUG_PRINT(...) fprintf( stderr, __VA_ARGS__ )
-#else
-# define DEBUG_PRINT(...) do{ } while (0)
-#endif
+#include "sdp8.h"
+#include "memory.h"
+#include "io.h"
+#include "sim.h"
 
-/*
-#if defined(DEBUG) && DEBUG > 0
- #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
-    __FILE__, __LINE__, __func__, ##args)
-*/
+
+// state of the simulated CPU
+uint16_t	acc, link, ir, pc;
+uint16_t	halt;
+
+
+/* --- internal definitions ----------------------------------------------- */
 
 // opcodes and bit masks for instruction analysis
 
@@ -33,137 +34,6 @@
 #define MASK_OFFSET		00177
 
 
-// simulator status codes
-
-#define STATUS_HALT	00001
-
-uint16_t	acc, link, ir, pc;
-uint16_t	halt;
-
-
-/* --- memory --------------------------------------------------------- */
-
-uint16_t	mem[4096]={
-	// copy arr1 to arr2
-	07300,	//  cla cll
-	01410,	//  copy,   tad i pArr1
-	03411,	//	    dca i pArr2
-	02206,	//          isz count
-	05201,	//          jmp copy
-	07402,	//          hlt
-	07772,	//  count,  7772
-	0,
-		// auto-indexing register at 0010:
-	00017,	//  pArr1,  arr1-1
-	00037,	//  pArr2,  arr2-1
-	01,02,03,04,05,06,
-		// the arrays at 0020:
-	01111,	//  arr1,   1111;2222;3333;4444;5555
-	02222,
-	03333,
-	04444,
-	05555,
-
-/*
-	// I/O-Test: print "ABC"
-	07300,	// CLA, CLL
-	01010,	// TAD 010
-	06006,	// IOT 4, CLA
-	01011,	// TAD 011
-	06006,	// IOT 4, CLA
-	01012,	// TAD 012
-	06006,	// IOT 4, CLA
-	07402,	// HLT
-	'A',
-	'B',
-	'C',
-*/
-/*
-	// simple loop test: for i=4 to 255; next
-//	07300,	// CLA, CLL
-	07307,	// CLA, CLL, IAC, RTL (clc, lda #4)
-	07001,	// IAC
-	07440,	// SZA
-	05001,	// JMP 0001
-	07402,	// HLT
-*/
-};
-
-
-/*
- * read one word from memory at given address
- */
-static inline int16_t mem_read(uint16_t adr)
-{
-	DEBUG_PRINT("read mem[%05o]=%05o\n", adr, mem[adr & 07777]);
-	return mem[adr & 07777] & 07777;
-}
-
-
-/*
- * write one word into memory at given address
- */
-static inline void mem_write(uint16_t adr, uint16_t val)
-{
-	DEBUG_PRINT("write mem[%05o]=%05o\n", adr, val);
-	mem[adr & 07777] = val & 07777;
-}
-
-
-/*
- * read one word from memory with preincrement
- */
-static inline uint16_t mem_preinc(uint16_t adr)
-{
-	uint16_t	tmp;
-
-	DEBUG_PRINT("++rd mem[%05o]=", adr);
-	adr &= 07777;
-	tmp = mem[adr] + 1;
-	tmp &= 07777;
-	mem[adr] = tmp;
-	DEBUG_PRINT("%05o\n", tmp);
-	return tmp;
-}
-
-
-
-/* --- I/O ----------------------------------------------------------- */
-
-/*
- * (very) simplyfied I/O-handling
- *
- * Input reads from stdin, output writes to stdout, independed of the
- * value of the device field in the instruction.
- *
- * FIXME: I/O operations very incomple
- */
-void do_io(void)
-{
-	// bit 0: skip next instruction if device is ready.
-	if (ir & 0001) {
-		// FIXME: this always assume ready state
-		pc++;
-	}
-
-
-	// bit 2: move a word between ACC and the device
-	if (ir & 0004) {
-		if (ir & 0010) {
-			// do input
-			acc = getchar();
-		} else {
-			// do output
-			putchar(acc);
-			// bit 1: clear ACC
-			if (ir & 0002) {
-				acc = 0;
-			}
-		}
-	}
-}
-
-			
 
 /* --- operate instructions ---------------------------------------------- */
 
@@ -452,28 +322,6 @@ void do_instruction(void)
 			do_operate_instructions();
 			break;
 	};
-}
-
-/* --- main ---------------------------------------------------------- */
-
-void dump_state(void)
-{
-	printf("%04o: ir=%04o acc=%04o link=%1o\n", pc, ir, acc, link);
-}
-
-void main()
-{
-	halt	= 0;
-	pc	= 0;
-	acc	= 0;
-	do {
-		ir = mem_read(pc);
-		dump_state();
-		pc++;
-		do_instruction();
-		pc &= 07777;
-	} while (!halt);
-	dump_state();
 }
 
 

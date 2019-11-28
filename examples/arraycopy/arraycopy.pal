@@ -1,0 +1,33 @@
+/ array copy:
+
+*0200
+	cla cll
+
+/ copy arr1 to arr2
+
+copy,	tad i pArr1
+	dca i pArr2
+	isz count
+	jmp copy
+
+/ done
+
+	hlt
+
+/ data
+
+count,	7772
+
+/ auto-indexing
+
+*10
+pArr1,	arr1-1
+pArr2,	arr2-1
+
+/ the arrays
+
+*220
+arr1,	1111;2222;3333;4444;5555
+*240
+arr2,	0;0;0;0;0
+

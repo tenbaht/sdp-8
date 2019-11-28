@@ -25,6 +25,7 @@ Supported CPU features:
 - 4kWords of core memory
 - auto-preincrement registers 0010-0017
 - simplyfied I/O: All IOT commands are directed to stdin and stdout
+- read paper tape images in BIN and RIM format
 
 
 Missing features:
@@ -36,14 +37,13 @@ Missing features:
 Severe simplifications:
 
 - No accurate timing. It runs as fast as the host CPU is capable of.
-- The memory image is compiled into the executable and there is no way to
-  exchange or reload it without recompiling.
 
 
 
 ## Code size
 
-compiling for different MCUs:
+compiling for different MCUs (only the simulator core, without paper tape
+reader and debug output):
 
 - AVR (avr-gcc -O2): 1333 bytes
 - STM8 (sdcc 3.9.1 #11242): 1054 bytes
@@ -69,6 +69,7 @@ Useful stuff:
   manual](https://www.grc.com/pdp-8/docs/MACRO-8_Programming_Manual.pdf):
   Good and comprehensive introduction for the PDP-8 instruction set. The
   MACRO-8 assembler is part of the simh simulator package.
+- [Detailed description of the I/O commands](http://homepage.cs.uiowa.edu/~jones/pdp8/man/tty.html)
 
 
 ## Software
