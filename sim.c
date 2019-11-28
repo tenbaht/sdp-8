@@ -1,6 +1,20 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#ifdef DEBUG
+# define DEBUG_PRINT(...) fprintf( stderr, __VA_ARGS__ )
+#else
+# define DEBUG_PRINT(...) do{ } while (0)
+#endif
+
+/*
+#if defined(DEBUG) && DEBUG > 0
+ #define DEBUG_PRINT(fmt, args...) fprintf(stderr, "DEBUG: %s:%d:%s(): " fmt, \
+    __FILE__, __LINE__, __func__, ##args)
+*/
+
+// opcodes and bit masks for instruction analysis
+
 #define OP_AND	00000
 #define OP_TAD	01000
 #define	OP_ISZ	02000
@@ -18,9 +32,17 @@
 #define MASK_PAGE		(MASK_OPCODE||MASK_BITS)
 #define MASK_OFFSET		00177
 
+
+// simulator status codes
+
 #define STATUS_HALT	00001
 
 uint16_t	acc, link, ir, pc;
+uint16_t	halt;
+
+
+/* --- memory --------------------------------------------------------- */
+
 uint16_t	mem[4096]={
 	// copy arr1 to arr2
 	07300,	//  cla cll
@@ -67,17 +89,26 @@ uint16_t	mem[4096]={
 */
 };
 
-uint16_t	halt;
-
-/* --- memory --------------------------------------------------------- */
 
 /*
  * read one word from memory at given address
  */
 static inline int16_t mem_read(uint16_t adr)
 {
+	DEBUG_PRINT("read mem[%05o]=%05o\n", adr, mem[adr & 07777]);
 	return mem[adr & 07777] & 07777;
 }
+
+
+/*
+ * write one word into memory at given address
+ */
+static inline void mem_write(uint16_t adr, uint16_t val)
+{
+	DEBUG_PRINT("write mem[%05o]=%05o\n", adr, val);
+	mem[adr & 07777] = val & 07777;
+}
+
 
 /*
  * read one word from memory with preincrement
@@ -86,21 +117,15 @@ static inline uint16_t mem_preinc(uint16_t adr)
 {
 	uint16_t	tmp;
 
-	tmp = mem[adr & 07777];
-	tmp = (tmp+1) &07777;
-	mem[adr & 07777] = tmp;
+	DEBUG_PRINT("++rd mem[%05o]=", adr);
+	adr &= 07777;
+	tmp = mem[adr] + 1;
+	tmp &= 07777;
+	mem[adr] = tmp;
+	DEBUG_PRINT("%05o\n", tmp);
 	return tmp;
 }
 
-
-
-/*
- * write one word into memory at given address
- */
-static inline void mem_write(uint16_t adr, uint16_t val)
-{
-	mem[adr & 07777] = val & 07777;
-}
 
 
 /* --- I/O ----------------------------------------------------------- */
@@ -321,6 +346,15 @@ static void do_group3()
 }
 
 
+/**
+ * decode the OPR instructions
+ *
+ * Since the CLA bit (bit 7) is the same for all three groups it is
+ * tempting to handle it right here instead of duplicating the code three
+ * times for every group. But this would mess up the execution order of the
+ * microcoded sub-instructions (execution order 1 for group 1 and 3, order 2
+ * for group 2).
+ */
 static void do_operate_instructions()
 {
 
@@ -328,7 +362,7 @@ static void do_operate_instructions()
 	// only commands within one group can be combined into a single
 	// instruction.
 	if (ir & 0400) {
-		// bit 8 == 0: group 2 or 3
+		// bit 8 == 1: group 2 or 3
 		if (ir & 0001) {
 			// bit 0 == 1: group 3
 			do_group3();
@@ -337,7 +371,7 @@ static void do_operate_instructions()
 			do_group2();
 		}
 	} else {
-		// bit 8 == 1: group 1	
+		// bit 8 == 0: group 1	
 		do_group1();
 	}
 }
@@ -345,7 +379,7 @@ static void do_operate_instructions()
 /* --- general instruction handling -------------------------------------- */
 
 
-/*
+/**
  * decode absolute address from MRI field of the current instruction
  */
 static uint16_t decode_address(void)
@@ -360,7 +394,7 @@ static uint16_t decode_address(void)
 		// (otherwise default to zero page)
 		adr |= pc & 07600;
 	};
-
+//	DEBUG_PRINT("adr=0%05o", adr);
 	// check for indirect bit:
 	if (ir & BIT_INDIRECT) {
 		if ((adr & 07770) == 00010) {
@@ -369,9 +403,10 @@ static uint16_t decode_address(void)
 		} else {
 			// regular read access
 			adr = mem_read(adr);
+			DEBUG_PRINT(", adr_I=0%05o", adr);
 		}
 	}
-
+	DEBUG_PRINT("\n");
 	return adr;
 }
 
