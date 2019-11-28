@@ -39,6 +39,31 @@ Severe simplifications:
 - No accurate timing. It runs as fast as the host CPU is capable of.
 
 
+## Compilation
+
+	$ make
+	cc    -c -o sdp8.o sdp8.c
+	cc    -c -o sim.o sim.c
+	cc    -c -o memory.o memory.c
+	cc    -c -o io.o io.c
+	cc    -c -o readtape.o readtape.c
+	cc   sdp8.o sim.o memory.o io.o readtape.o   -o sdp8
+
+
+
+## Usage
+
+	sdp8 filename [startadr]
+
+Paper tape images can be in BIN or RIM format. The optional start address
+can be in decimal, octal (with leading '0') or hex (with leading '0x'). If no
+address is given, the execution starts at address 0.
+
+Example:
+
+	./sdp8 examples/arraycopy/arraycopy.bin 0200
+
+
 
 ## Code size
 

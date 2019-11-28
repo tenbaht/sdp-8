@@ -1,3 +1,5 @@
+CFLAGS+=-O2
+
 .PHONY: clean
 
 sdp8: sdp8.o sim.o memory.o io.o readtape.o

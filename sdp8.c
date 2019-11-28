@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "sdp8.h"
 #include "sim.h"
 #include "memory.h"
@@ -14,7 +15,6 @@ void dump_state(void)
 static void sim_loop()
 {
 	halt	= 0;
-	pc	= 0;
 	acc	= 0;
 	do {
 		ir = mem_read(pc);
@@ -30,11 +30,20 @@ static void sim_loop()
 int main(int argc, char *argv[])
 {
 	if (argc<2) {
-		printf("usage: %s filename\n", argv[0]);
+		printf("usage: %s filename [startadr]\n", argv[0]);
 		return 1;
 	}
 
 	read_tape(argv[1]);
+
+	// determine the start address
+	pc = 0;
+	if (argc>2) {
+		pc = strtol(argv[2], NULL, 0) & 07777;
+	}
+
+	// simulate the program
+	printf("Start the emulation at address 0%04o\n", pc);
 	sim_loop();
 }
 
