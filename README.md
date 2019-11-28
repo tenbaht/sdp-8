@@ -50,10 +50,53 @@ compiling for different MCUs:
 - ARM:
 
 
-### Software
+## Introduction into PDP-8 programming
+
+Must-reads:
+
+- [Wikipedia article](https://en.wikipedia.org/wiki/PDP-8) with very
+  detailed but compact information about the instruction set and system
+  architecture
+- [Introduction to programming PDP-8 Family
+  Computers](http://bitsavers.informatik.uni-stuttgart.de/pdf/dec/pdp8/handbooks/IntroToProgramming1969.pdf):
+  An excellent introduction into assembler programming in general. It covers
+  all the basics including the conversion of floating point numbers. This book
+  should be part of the standard curriculum to all computer schools.
+
+Useful stuff:
+
+- [MACRO-8 programming
+  manual](https://www.grc.com/pdp-8/docs/MACRO-8_Programming_Manual.pdf):
+  Good and comprehensive introduction for the PDP-8 instruction set. The
+  MACRO-8 assembler is part of the simh simulator package.
+
+
+## Software
+
+MACRO8: The simh packages (see below) include macro8x, an assembler for
+PDP-8 code. Unfortunatly, the simulator can't read the .bin files generated
+by the assembler.
 
 Images of original software for the PDP-8 (incl. FOCAL and OS8):
 http://so-much-stuff.com/pdp8/papertape/papertape.php
+
+
+## Similar projects
+
+There are so many PDP-8 simulators out there. And now I understand why: The
+architecture is so simple. So clean. So beautiful. And there is so much to
+learn from it. Highly recommanded educational and fun project for every
+programmer.
+
+- [A PDP-8 simulator written in JavaScript and HTML](https://programmer209.wordpress.com/2011/01/30/pdp-8-assembly-language-part-1/)
+- [simh 4.x](https://github.com/simh/simh): github repository of the more
+  powerful 4.x stream of the most comprehensive simulator available
+- [simh 3.x](http://simh.trailing-edge.com/): Website for the still maintained
+  3.x branch of simh. More simple than the 4.x version.
+- [js-pdp8](https://github.com/MircoT/js-pdp8): Another JavaScript PDP-8
+  simulator, allows direct input of assembler source code.
+
+
 
 [//]: # vim: tw=78
 
