@@ -394,7 +394,7 @@ static uint16_t decode_address(void)
 		// (otherwise default to zero page)
 		adr |= pc & 07600;
 	};
-//	DEBUG_PRINT("adr=0%05o", adr);
+
 	// check for indirect bit:
 	if (ir & BIT_INDIRECT) {
 		if ((adr & 07770) == 00010) {
